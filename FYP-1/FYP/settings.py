@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     "rest_framework",
     # Local apps
     "users",
+    "datasets",  
 ]
 
 MIDDLEWARE = [
@@ -129,8 +130,10 @@ USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
-
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 STATIC_URL = "static/"
+FILE_UPLOAD_MAX_MEMORY_SIZE = 50 * 1024 * 1024  # 50 MB
 
 
 # Default primary key field type
