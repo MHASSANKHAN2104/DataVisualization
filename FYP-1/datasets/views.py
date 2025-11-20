@@ -1,8 +1,9 @@
 import hashlib
 import mimetypes
-
+import logging
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from .tasks import start_profiling_and_cleaning_job
 
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -98,7 +99,17 @@ class DatasetUploadView(APIView):
         # Mark as stored (in real life you'd run parsing/validation first)
         ingest.mark_stored()
         ingest.storage_key = ingest.file.name  # path relative to MEDIA_ROOT
+    
         ingest.save(update_fields=["storage_key"])
+
+        # 🔹 Start profiling/cleaning job (Phase 4)
+        try:
+            start_profiling_and_cleaning_job(ingest.id, request.user.id)
+        except Exception:
+            logger = logging.getLogger("data_profiling")
+            logger.exception(
+                "Failed to start profiling job for ingest id=%s", ingest.id
+            )
 
         return Response({"upload_id": ingest.id},
                         status=status.HTTP_201_CREATED)

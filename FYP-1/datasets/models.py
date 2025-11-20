@@ -102,3 +102,45 @@ class FileIngest(models.Model):
 
     def __str__(self):
         return f"FileIngest id={self.id}, status={self.status}"
+    
+class DatasetVersion(models.Model):
+    
+
+    dataset = models.ForeignKey(
+        "DataSource",
+        related_name="versions",
+        on_delete=models.CASCADE,
+    )
+    file_ingest = models.ForeignKey(
+        "FileIngest",
+        related_name="versions",
+        on_delete=models.PROTECT,
+    )
+
+    version_no = models.PositiveIntegerField()  # 1, 2, 3, ...
+
+    row_count = models.PositiveIntegerField(default=0)
+    column_count = models.PositiveIntegerField(default=0)
+
+    # hash of (column name + dtype) pairs
+    schema_hash = models.CharField(max_length=64)
+
+    # full stats + cleaning plan from agent
+    profile_json = models.JSONField(default=dict)
+
+    # provenance: upload_id, checksum, agent version, etc.
+    lineage_json = models.JSONField(default=dict)
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        related_name="dataset_versions",
+        on_delete=models.PROTECT,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ("dataset", "version_no")
+        ordering = ["dataset", "version_no"]
+
+    def __str__(self):
+        return f"{self.dataset.name} v{self.version_no}"
